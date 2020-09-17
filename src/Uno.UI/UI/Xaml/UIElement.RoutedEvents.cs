@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Windows.Foundation;
 using Windows.UI.Xaml.Input;
 using Microsoft.Extensions.Logging;
 using Uno;
@@ -113,6 +114,18 @@ namespace Windows.UI.Xaml
 		public static RoutedEvent RightTappedEvent { get; } = new RoutedEvent(RoutedEventFlag.RightTapped);
 
 		public static RoutedEvent HoldingEvent { get; } = new RoutedEvent(RoutedEventFlag.Holding);
+
+		/* ** */ internal /* ** */ static RoutedEvent DragStartingEvent { get; } = new RoutedEvent(RoutedEventFlag.DragStarting);
+
+		public static RoutedEvent DragEnterEvent { get; } = new RoutedEvent(RoutedEventFlag.DragEnter);
+
+		public static RoutedEvent DragOverEvent { get; } = new RoutedEvent(RoutedEventFlag.DragOver);
+
+		public static RoutedEvent DragLeaveEvent { get; } = new RoutedEvent(RoutedEventFlag.DragLeave);
+
+		public static RoutedEvent DropEvent { get; } = new RoutedEvent(RoutedEventFlag.Drop);
+
+		/* ** */ internal /* ** */  static RoutedEvent DropCompletedEvent { get; } = new RoutedEvent(RoutedEventFlag.DropCompleted);
 
 		public static RoutedEvent KeyDownEvent { get; } = new RoutedEvent(RoutedEventFlag.KeyDown);
 
@@ -327,6 +340,42 @@ namespace Windows.UI.Xaml
 			remove => RemoveHandler(HoldingEvent, value);
 		}
 
+		public event TypedEventHandler<UIElement, DragStartingEventArgs> DragStarting
+		{
+			add => AddHandler(DragStartingEvent, value, false);
+			remove => RemoveHandler(DragStartingEvent, value);
+		}
+
+		public event DragEventHandler DragEnter
+		{
+			add => AddHandler(DragEnterEvent, value, false);
+			remove => RemoveHandler(DragEnterEvent, value);
+		}
+
+		public event DragEventHandler DragLeave
+		{
+			add => AddHandler(DragLeaveEvent, value, false);
+			remove => RemoveHandler(DragLeaveEvent, value);
+		}
+
+		public event DragEventHandler DragOver
+		{
+			add => AddHandler(DragOverEvent, value, false);
+			remove => RemoveHandler(DragOverEvent, value);
+		}
+
+		public event DragEventHandler Drop
+		{
+			add => AddHandler(DropEvent, value, false);
+			remove => RemoveHandler(DropEvent, value);
+		}
+
+		public event TypedEventHandler<UIElement, DropCompletedEventArgs> DropCompleted
+		{
+			add => AddHandler(DropCompletedEvent, value, false);
+			remove => RemoveHandler(DropCompletedEvent, value);
+		}
+
 #if __MACOS__
 		public new event KeyEventHandler KeyDown
 #else
@@ -409,6 +458,10 @@ namespace Windows.UI.Xaml
 			{
 				AddGestureHandler(routedEvent, handlersCount, handler, handledEventsToo);
 			}
+			else if (routedEvent.IsDragAndDropEvent)
+			{
+				AddDragAndDropHandler(routedEvent, handlersCount, handler, handledEventsToo);
+			}
 		}
 
 		partial void AddPointerHandler(RoutedEvent routedEvent, int handlersCount, object handler, bool handledEventsToo);
@@ -416,6 +469,7 @@ namespace Windows.UI.Xaml
 		partial void AddFocusHandler(RoutedEvent routedEvent, int handlersCount, object handler, bool handledEventsToo);
 		partial void AddManipulationHandler(RoutedEvent routedEvent, int handlersCount, object handler, bool handledEventsToo);
 		partial void AddGestureHandler(RoutedEvent routedEvent, int handlersCount, object handler, bool handledEventsToo);
+		partial void AddDragAndDropHandler(RoutedEvent routedEvent, int handlersCount, object handler, bool handledEventsToo);
 
 		public void RemoveHandler(RoutedEvent routedEvent, object handler)
 		{
@@ -464,6 +518,10 @@ namespace Windows.UI.Xaml
 			{
 				RemoveGestureHandler(routedEvent, remainingHandlersCount, handler);
 			}
+			else if (routedEvent.IsDragAndDropEvent)
+			{
+				RemoveDragAndDropHandler(routedEvent, remainingHandlersCount, handler);
+			}
 		}
 
 		partial void RemovePointerHandler(RoutedEvent routedEvent, int remainingHandlersCount, object handler);
@@ -471,6 +529,7 @@ namespace Windows.UI.Xaml
 		partial void RemoveFocusHandler(RoutedEvent routedEvent, int remainingHandlersCount, object handler);
 		partial void RemoveManipulationHandler(RoutedEvent routedEvent, int remainingHandlersCount, object handler);
 		partial void RemoveGestureHandler(RoutedEvent routedEvent, int remainingHandlersCount, object handler);
+		partial void RemoveDragAndDropHandler(RoutedEvent routedEvent, int remainingHandlersCount, object handler);
 
 		private int CountHandler(RoutedEvent routedEvent)
 			=> _eventHandlerStore.TryGetValue(routedEvent, out var handlers)
@@ -626,6 +685,10 @@ namespace Windows.UI.Xaml
 			{
 				PrepareManagedGestureEventBubbling(routedEvent, ref alteredArgs, ref isBubblingAllowed);
 			}
+			else if (routedEvent.IsDragAndDropEvent)
+			{
+				PrepareManagedDragAndDropEventBubbling(routedEvent, ref alteredArgs, ref isBubblingAllowed);
+			}
 
 			return isBubblingAllowed;
 		}
@@ -635,6 +698,7 @@ namespace Windows.UI.Xaml
 		partial void PrepareManagedFocusEventBubbling(RoutedEvent routedEvent, ref RoutedEventArgs args, ref bool isBubblingAllowed);
 		partial void PrepareManagedManipulationEventBubbling(RoutedEvent routedEvent, ref RoutedEventArgs args, ref bool isBubblingAllowed);
 		partial void PrepareManagedGestureEventBubbling(RoutedEvent routedEvent, ref RoutedEventArgs args, ref bool isBubblingAllowed);
+		partial void PrepareManagedDragAndDropEventBubbling(RoutedEvent routedEvent, ref RoutedEventArgs args, ref bool isBubblingAllowed);
 
 		private static bool IsHandled(RoutedEventArgs args)
 		{
@@ -697,6 +761,10 @@ namespace Windows.UI.Xaml
 				case HoldingEventHandler holdingEventHandler:
 					holdingEventHandler(this, (HoldingRoutedEventArgs)args);
 					break;
+				case DragEventHandler dragEventHandler:
+					dragEventHandler(this, (DragEventArgs)args);
+					break;
+				// TODO: DragStarting / DropCompleted
 				case KeyEventHandler keyEventHandler:
 					keyEventHandler(this, (KeyRoutedEventArgs)args);
 					break;
