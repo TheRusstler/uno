@@ -677,23 +677,17 @@ namespace Uno.UI.SourceGenerators.XamlGenerator
 				writer.AppendLineInvariant($"[global::System.Diagnostics.DebuggerNonUserCodeAttribute()]");
 				using (writer.BlockInvariant($"private class {bindingsClassName} : {bindingsInterfaceName}"))
 				{
-					writer.AppendLineInvariant("#if UNO_HAS_UIELEMENT_IMPLICIT_PINNING");
-					writer.AppendLineInvariant("{0}", $"private global::System.WeakReference _ownerReference;");
-					writer.AppendLineInvariant("{0}", $"private {className} Owner {{ get => ({className})_ownerReference?.Target; set => _ownerReference = new global::System.WeakReference(value); }}");
-					writer.AppendLineInvariant("#else");
-					writer.AppendLineInvariant("{0}", $"private {className} Owner {{ get; set; }}");
-					writer.AppendLineInvariant("#endif");
-
+					writer.AppendLineInvariant($"private readonly {className} _owner;");
 
 					using (writer.BlockInvariant($"public {bindingsClassName}({className} owner)"))
 					{
-						writer.AppendLineInvariant($"Owner = owner;");
+						writer.AppendLineInvariant($"_owner = owner;");
 					}
 
 					using (writer.BlockInvariant($"void {bindingsInterfaceName}.Initialize()")) { }
 					using (writer.BlockInvariant($"void {bindingsInterfaceName}.Update()"))
 					{
-						writer.AppendLineInvariant($"Owner.ApplyCompiledBindings();");
+						writer.AppendLineInvariant($"_owner.ApplyCompiledBindings();");
 					}
 					using (writer.BlockInvariant($"void {bindingsInterfaceName}.StopTracking()")) { }
 				}

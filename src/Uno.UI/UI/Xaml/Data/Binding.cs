@@ -22,20 +22,6 @@ namespace Windows.UI.Xaml.Data
 		/// </summary>
 		private WeakReference _weakSource;
 
-#if UNO_HAS_UIELEMENT_IMPLICIT_PINNING
-		/// <summary>
-		/// On platforms which perform implicit and opaque pinning of native references, it
-		/// is required to keep weak references to direct and indirect references to UIElement instances.
-		/// Keeping weak references is costly,  so it's enabled only on select platforms.
-		/// Note that this is needed only for x:Bind related operations, where the lifespan of
-		/// the binding is explicitly tied to the object containing the weak references. This means
-		/// that there's weak references will be kept alive properly.
-		/// </summary>
-
-		private WeakReference _xBindSelector, _xBindBack;
-		private ManagedWeakReference _compiledSource;
-#endif
-
 		/// <summary>
 		/// A hard storage for other types of <see cref="Source"/> content.
 		/// </summary>
@@ -128,7 +114,7 @@ namespace Windows.UI.Xaml.Data
 				{
 					// Native iOS and Android objects objects make for native GC loops
 					// Break this cycle for these objects, assuming those objects are 
-					// in the visual tree, where another GC root keeps them alive.
+					// in the visual tree, where another GC root keeps them alice.
 					// In this case, we create a weak reference so both object can be 
 					// collected properly.
 					// In the other case, we keep a hard reference to the source.
@@ -171,34 +157,18 @@ namespace Windows.UI.Xaml.Data
 		/// </summary>
 		/// <value>The source.</value>
 		[EditorBrowsable(EditorBrowsableState.Never)]
-		public object CompiledSource
-#if UNO_HAS_UIELEMENT_IMPLICIT_PINNING
-		{ get => _compiledSource?.Target; set => _compiledSource = WeakReferencePool.RentWeakReference(this, value); }
-#else
-		{ get; set; }
-#endif
-
+		public object CompiledSource { get; set; }
 
 		/// <summary>
 		/// Provides the method used in the context of x:Bind expressions to
 		/// get the resulting value.
 		/// </summary>
-		internal Func<object, object> XBindSelector
-#if UNO_HAS_UIELEMENT_IMPLICIT_PINNING
-		{ get => (Func<object, object>)_xBindSelector?.Target; private set => _xBindSelector = new WeakReference(value); }
-#else
-		{ get; private set; }
-#endif
+		internal Func<object, object> XBindSelector { get; private set; }
 
 		/// <summary>
 		/// Provides the method used to set the value back to the source.
 		/// </summary>
-		internal Action<object, object> XBindBack
-#if UNO_HAS_UIELEMENT_IMPLICIT_PINNING
-		{ get => (Action<object, object>)_xBindBack?.Target; private set => _xBindBack = new WeakReference(value); }
-#else
-		{ get; private set; }
-#endif
+		internal Action<object, object> XBindBack { get; private set; }
 
 		/// <summary>
 		/// List of paths to observe in the context x:Bind expressions

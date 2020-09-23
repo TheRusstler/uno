@@ -26,6 +26,7 @@ namespace UITests.Shared.Windows_UI_Xaml.FrameworkElementTests
 
 		private void Button_Click(object sender, RoutedEventArgs e)
 		{
+			Console.WriteLine("Button_Click");
 		}
 	}
 }
