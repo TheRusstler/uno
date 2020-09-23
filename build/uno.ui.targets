@@ -23,6 +23,7 @@
 			<UnoDefineConstants>$(UnoDefineConstants);HAS_UNO</UnoDefineConstants>
 			<UnoDefineConstants>$(UnoDefineConstants);UNO_HAS_FRAMEWORKELEMENT_MEASUREOVERRIDE</UnoDefineConstants>
 			<UnoDefineConstants>$(UnoDefineConstants);UNO_HAS_NO_IDEPENDENCYOBJECT</UnoDefineConstants>
+			<UnoDefineConstants Condition="'$(TargetFramework)'=='xamarinios10' or '$(TargetFramework)'=='xamarinmac20'">$(UnoDefineConstants);UNO_HAS_UIELEMENT_IMPLICIT_PINNING</UnoDefineConstants>
 		</PropertyGroup>
 
 		<!-- Merge the UnoDefineConstants with the existing constants -->

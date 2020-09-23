@@ -47,7 +47,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="$(IsXamarinIOS)">
-	<DefineConstants>$(DefineConstants);IOS1_0;XAMARIN;XAMARIN_IOS;XAMARIN_IOS_UNIFIED</DefineConstants>
+	<DefineConstants>$(DefineConstants);IOS1_0;XAMARIN;XAMARIN_IOS;XAMARIN_IOS_UNIFIED;UNO_HAS_UIELEMENT_IMPLICIT_PINNING</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="$(IsMonoAndroid)">
