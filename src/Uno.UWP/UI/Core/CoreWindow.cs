@@ -1,22 +1,33 @@
+#nullable enable
+
 using System;
 using System.Runtime.InteropServices;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Foundation.Metadata;
+using Windows.UI.Input;
 
 namespace Windows.UI.Core
 {
 	public partial class CoreWindow
 	{
 		[ThreadStatic]
-		private static CoreWindow _current;
+		private static CoreWindow? _current;
 
-		public static CoreWindow GetForCurrentThread()
+		public static CoreWindow? GetForCurrentThread()
 			=> _current; // UWP returns 'null' if on a BG thread
 
+		private static Action? _invalidateRender;
+
+		internal static void SetInvalidateRender(Action invalidateRender)
+			=> _invalidateRender = invalidateRender;
+
+		internal static void QueueInvalidateRender()
+			=> _invalidateRender?.Invoke();
+
+		public event TypedEventHandler<CoreWindow, WindowSizeChangedEventArgs>? SizeChanged;
+
 		private Point? _pointerPosition;
-		private IPointerEventArgs _lastPointerEventArgs;
-		private static Action _invalidateRender;
 
 		internal CoreWindow()
 		{
@@ -24,20 +35,13 @@ namespace Windows.UI.Core
 			InitializePartial();
 		}
 
-		internal static void SetInvalidateRender(Action invalidateRender) => _invalidateRender = invalidateRender;
+		public CoreDispatcher Dispatcher => CoreDispatcher.Main;
 
-		internal static void QueueInvalidateRender() => _invalidateRender?.Invoke();
-
-		partial void InitializePartial();
-    
-		public event TypedEventHandler<CoreWindow, WindowSizeChangedEventArgs> SizeChanged;
-
-		public CoreDispatcher Dispatcher
-			=> CoreDispatcher.Main;
+		internal IPointerEventArgs? LastPointerEvent { get; set; }
 
 		public Point PointerPosition
 		{
-			get => _pointerPosition ?? _lastPointerEventArgs?.GetLocation() ?? new Point();
+			get => _pointerPosition ?? LastPointerEvent?.GetLocation(null).Position ?? new Point();
 			set => _pointerPosition = value;
 		}
 
@@ -54,17 +58,14 @@ namespace Windows.UI.Core
 		public CoreVirtualKeyStates GetKeyState(System.VirtualKey virtualKey)
 			=> CoreVirtualKeyStates.None;
 
-		internal void SetLastPointerEvent(IPointerEventArgs args)
-			=> _lastPointerEventArgs = args;
+		partial void InitializePartial();
+
+		internal void OnSizeChanged(WindowSizeChangedEventArgs windowSizeChangedEventArgs)
+			=> SizeChanged?.Invoke(this, windowSizeChangedEventArgs);
 
 		internal interface IPointerEventArgs
 		{
-			Point GetLocation();
-		}
-
-		internal void OnSizeChanged(WindowSizeChangedEventArgs windowSizeChangedEventArgs)
-		{
-			SizeChanged?.Invoke(this, windowSizeChangedEventArgs);
+			PointerPoint GetLocation(object? relativeTo);
 		}
 	}
 }
