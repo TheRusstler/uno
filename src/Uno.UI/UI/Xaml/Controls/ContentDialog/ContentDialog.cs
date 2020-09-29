@@ -9,6 +9,8 @@ using Uno.Extensions;
 using Windows.Foundation;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.System;
+using Uno.UI.DataBinding;
 
 namespace Windows.UI.Xaml.Controls
 {
@@ -31,10 +33,15 @@ namespace Windows.UI.Xaml.Controls
 			};
 
 			_popup.PopupPanel = new ContentDialogPopupPanel(this);
+
+			var thisRef = (this as IWeakReferenceProvider).WeakReference;
 			_popup.Opened += (s, e) =>
 			{
-				Opened?.Invoke(this, new ContentDialogOpenedEventArgs());
-				VisualStateManager.GoToState(this, "DialogShowing", true);
+				if (thisRef.Target is ContentDialog that)
+				{
+					that.Opened?.Invoke(that, new ContentDialogOpenedEventArgs());
+					VisualStateManager.GoToState(that, "DialogShowing", true);
+				}
 			};
 			this.KeyDown += OnPopupKeyDown;
 
